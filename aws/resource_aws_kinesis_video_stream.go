@@ -7,9 +7,10 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/kinesisvideo"
+	"github.com/terraform-providers/terraform-provider-aws/aws/internal/keyvaluetags"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func resourceAwsKinesisVideoStream() *schema.Resource {
@@ -101,7 +102,7 @@ func resourceAwsKinesisVideoStreamCreate(d *schema.ResourceData, meta interface{
 	}
 
 	if v, ok := d.GetOk("tags"); ok {
-		createOpts.Tags = tagsFromMapGeneric(v.(map[string]interface{}))
+		createOpts.Tags = keyvaluetags.New(v).IgnoreAws()
 	}
 
 	resp, err := conn.CreateStream(createOpts)

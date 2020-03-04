@@ -5,7 +5,8 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/kinesisvideo"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/terraform-providers/terraform-provider-aws/aws/internal/keyvaluetags"
 )
 
 func saveTagsKinesisVideoStream(conn *kinesisvideo.KinesisVideo, d *schema.ResourceData, arn string) error {
@@ -16,7 +17,7 @@ func saveTagsKinesisVideoStream(conn *kinesisvideo.KinesisVideo, d *schema.Resou
 		return err
 	}
 
-	if err := d.Set("tags", tagsToMapGeneric(resp.Tags)); err != nil {
+	if err := d.Set("tags", keyvaluetags.New(resp.Tags).IgnoreAws()); err != nil {
 		return err
 	}
 
@@ -26,9 +27,11 @@ func saveTagsKinesisVideoStream(conn *kinesisvideo.KinesisVideo, d *schema.Resou
 func setTagsKinesisVideoStream(conn *kinesisvideo.KinesisVideo, d *schema.ResourceData, arn string) error {
 	if d.HasChange("tags") {
 		oraw, nraw := d.GetChange("tags")
-		o := oraw.(map[string]interface{})
-		n := nraw.(map[string]interface{})
-		create, remove := diffTagsGeneric(o, n)
+		o := keyvaluetags.New(oraw)
+		n := keyvaluetags.New(nraw)
+		create := o.Updated(n)
+		remove := o.Removed(n)
+
 		if len(remove) > 0 {
 			log.Printf("[DEBUG] Removing tags: %#v", remove)
 			keys := make([]*string, 0, len(remove))
